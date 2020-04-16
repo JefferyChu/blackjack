@@ -29,44 +29,24 @@ Some exceptional cases:
 
 import random
 from IPython.display import clear_output
-
-# Creation of Deck Cards class
-
-class Card:
-    
-    def __init__(self,value1,value2,suit,indexvalue):
-        self.value1 = value1
-        self.value2 = value2
-        self.suit = suit
-        self.indexvalue = indexvalue
-        
-    def __str__(self):
-        return f"This card has values {self.value1} and {self.value2} and is of suit {self.suit}"
-        
-# Creation of Player class
-
-class Player:
-    
-    def __init__(self,name,balance):
-        self.name = name
-        self.balance = balance
-    def balance_change(self,winnings):
-        self.balance = self.balance + winnings
+from class_def import Card, Player
         
 # Deck Generator function
 
 def deck_generator():
+    
     deck_dict = {}
-
     suits = ['clubs','diamonds','hearts','spades']
+    
     for suit in suits:
         for x in range(1,14):
             if x == 1:
-                deck_dict['{}{}'.format(suit,x)] = Card(x,11,suit,x)
+                deck_dict['{}{}'.format(suit, x)] = Card(x, 11, suit, x)
             elif x > 10:
-                deck_dict['{}{}'.format(suit,x)] = Card(10,10,suit,x)
+                deck_dict['{}{}'.format(suit, x)] = Card(10 , 10, suit, x)
             else:
-                deck_dict['{}{}'.format(suit,x)] = Card(x,x,suit,x)
+                deck_dict['{}{}'.format(suit, x)] = Card(x, x, suit, x)
+
     return deck_dict
 
 # General Take 1 Card function
@@ -78,6 +58,7 @@ def take_1_card(hand_to_change, deck_list):
     card_picked = deck_list[num_picked]
     del deck_list[num_picked]
     hand_to_change.append(card_picked)
+    
     return hand_to_change, deck_list
     
 # Hand Value Calculator function
@@ -97,7 +78,7 @@ def cal_hand_value(hand):
     
 # Display Hand function
 
-def display_hand(player, hand,cal_hand_value,deck_list):
+def display_hand(player, hand, cal_hand_value, deck_list):
     print('\n{}\'s hand: '.format(player.name))
     for pair in hand:
         if pair[1].indexvalue == 1:
@@ -110,15 +91,13 @@ def display_hand(player, hand,cal_hand_value,deck_list):
             print(pair[1].value1,'- King of {}'.format(pair[1].suit))
         else:
             print(pair[1].value1,'of {}'.format(pair[1].suit))
-    print('\nCurrent hand values are ',cal_hand_value(hand))
+    print('\nCurrent hand values are ', cal_hand_value(hand))
     print('\nCurrent deck len:', len(deck_list))
     
 # Initialize players and balances
-
 player1 = Player('Player 1', 5000)
 
 # Initialize house and balances
-
 house = Player('House', 1000000)
 
 # Generate deck
@@ -129,7 +108,7 @@ dist_counter = 0
 player1_hand = []
 dealer_hand = []
 
-print('Your balance: ',player1.balance)
+print('Your balance: {}'.format(player1.balance))
 
 # Input and check for bet amount
 while True:
@@ -176,7 +155,7 @@ while pdecision == 'h':
         print('\nUnfortunate! You went Bust with a hand value of {}.'.format(min(cal_hand_value(player1_hand))))
         print('\nDealer: "Hahaha, your money is safer with us!"')
         player1.balance_change(-bet_amount)
-        print('Your balance is now:',player1.balance)
+        print('Your balance is now:', player1.balance)
         break
     else:
         pass
@@ -205,9 +184,9 @@ else:
     # First ensures anything above 21 hand value is bust
     if min(cal_hand_value(dealer_hand)) > 21:
         print('\nDealer busted! You win!')
-        print('Your previous balance was: ',player1.balance)
+        print('Your previous balance was: ', player1.balance)
         player1.balance_change(2*bet_amount)
-        print('Your balance is now:',player1.balance)
+        print('Your balance is now:', player1.balance)
         print('\nDealer: "Nooooooo!"')
     
     else:
@@ -238,15 +217,15 @@ else:
         
         elif house_final_value == player1_final_value:
             print('\nDraw!')
-            print('Your previous balance was: ',player1.balance)
-            print('Your balance remains unchanged at: ',player1.balance)
+            print('Your previous balance was: ', player1.balance)
+            print('Your balance remains unchanged at: ', player1.balance)
             print('\nDealer: "Let us play again!"')
         
         else:
             print('\nYou have the better hand. You win!')
-            print('Your previous balance was: ',player1.balance)
-            player1.balance_change(2*bet_amount)
-            print('Your balance is now: ',player1.balance)
+            print('Your previous balance was: ', player1.balance)
+            player1.balance_change(2 * bet_amount)
+            print('Your balance is now: ', player1.balance)
             print('\nDealer: "I\'ll get you for this"')
 
 # To fix
