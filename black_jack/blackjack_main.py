@@ -12,6 +12,7 @@ Some exceptional cases:
 """
 
 """
+### Logical Flow
 - Player places bet
 - Give player hand
 - Give dealer hand
@@ -25,167 +26,93 @@ Some exceptional cases:
 - Winner gets 2 x bet
 - Regenerate deck and clear hands
 """
-# Imports
 
+# Imports
 import random
 from IPython.display import clear_output
-from class_def import Card, Player
-        
-# Deck Generator function
-
-def deck_generator():
+from class_def import Card, Player, CardOperations
     
-    deck_dict = {}
-    suits = ['clubs','diamonds','hearts','spades']
-    
-    for suit in suits:
-        for x in range(1,14):
-            if x == 1:
-                deck_dict['{}{}'.format(suit, x)] = Card(x, 11, suit, x)
-            elif x > 10:
-                deck_dict['{}{}'.format(suit, x)] = Card(10 , 10, suit, x)
-            else:
-                deck_dict['{}{}'.format(suit, x)] = Card(x, x, suit, x)
-
-    return deck_dict
-
-# General Take 1 Card function
-
-def take_1_card(hand_to_change, deck_list):
-    
-    num_picked = random.randint(0,len(deck_list)-1)
-    #print('index num: ', num_picked)
-    card_picked = deck_list[num_picked]
-    del deck_list[num_picked]
-    hand_to_change.append(card_picked)
-    
-    return hand_to_change, deck_list
-    
-# Hand Value Calculator function
-
-def cal_hand_value(hand):
-    hand_value1 = 0
-    hand_value2 = 0
-    for pair in hand:
-        hand_value1 += pair[1].value1
-        
-        # To account for 2 aces, take the lower value to prevent 22 value
-        if hand_value2 + pair[1].value2 > 21:
-            hand_value2 += pair[1].value1
-        else:
-            hand_value2 += pair[1].value2
-    return hand_value1, hand_value2
-    
-# Display Hand function
-
-def display_hand(player, hand, cal_hand_value, deck_list):
-    print('\n{}\'s hand: '.format(player.name))
-    for pair in hand:
-        if pair[1].indexvalue == 1:
-            print(pair[1].value1,'- Ace of {}'.format(pair[1].suit))
-        elif pair[1].indexvalue == 11:
-            print(pair[1].value1,'- Jack of {}'.format(pair[1].suit))
-        elif pair[1].indexvalue == 12:
-            print(pair[1].value1,'- Queen of {}'.format(pair[1].suit))
-        elif pair[1].indexvalue == 13:
-            print(pair[1].value1,'- King of {}'.format(pair[1].suit))
-        else:
-            print(pair[1].value1,'of {}'.format(pair[1].suit))
-    print('\nCurrent hand values are ', cal_hand_value(hand))
-    print('\nCurrent deck len:', len(deck_list))
-    
-# Initialize players and balances
+# Initialize player, house and CardOperations
 player1 = Player('Player 1', 5000)
-
-# Initialize house and balances
 house = Player('House', 1000000)
-
-# Generate deck
-deck_list = list(deck_generator().items()) # Generate new deck at start of game
+card_ops = CardOperations()
 
 # Initialize hands and initial distribution counter
-dist_counter = 0
+deck_list = card_ops.deck_generator()  # Generate new deck at start of game
 player1_hand = []
 dealer_hand = []
 
-print('Your balance: {}'.format(player1.balance))
+print(f'Your balance: {player1.balance}')
 
 # Input and check for bet amount
 while True:
     try:
-        bet_amount = int(input('\nWhat is the bet amount? '))
+        bet_amount = int(input('How much do you want to bet? '))
         if (bet_amount > player1.balance or bet_amount < 0):
-            print('\nYou cannot bet more than your balance or a negative number!')
+            print('You cannot bet more than your balance or a negative number!')
         else:
             break
     except:
         print('Please enter proper integer value for the bet!')
-    
-# Distribute first 2 cards to player and dealer
-while dist_counter < 2:
-    
-    # Take 1 card for player
-    player1_hand, deck_list = take_1_card(player1_hand, deck_list)
-    #print('Player 1 hand: ',player1_hand, '\nCurrent deck len: ', len(deck_list))
-    
-    # Take 1 card for dealer
-    dealer_hand, deck_list = take_1_card(dealer_hand, deck_list)
-    #print('Dealer hand: ',dealer_hand, '\nCurrent deck len: ', len(deck_list))
-    
-    dist_counter += 1
 
-print('\nEnd of initial distribution.')
+# Take first turn
+(player1_hand, dealer_hand, desk_list) = card_ops.take_one_turn(player1_hand, dealer_hand, deck_list)
 
 # Display Hand and Current Values
-display_hand(player1, player1_hand, cal_hand_value, deck_list)
+card_ops.display_hand(player1, player1_hand, card_ops.cal_hand_value, deck_list)
 
 # Player's Turn
 
 # Ask for input to HIT or STAY
-pdecision = input('\nHIT or STAY? Type h for HIT or s for STAY: ').lower()
+while True:
+    player_decision = input('HIT or STAY? Type h for HIT or s for STAY: ').lower()
+    if player_decision not in ['h', 's']:
+        print('Please select valid decision!')
+    else:
+        break
 
-while pdecision == 'h':
+if player_decision == 'h':
     
-    player1_hand, deck_list = take_1_card(player1_hand, deck_list)
+    player1_hand, deck_list = card_ops.take_1_card(player1_hand, deck_list)
     
-    display_hand(player1, player1_hand, cal_hand_value, deck_list)
+    card_ops.display_hand(player1, player1_hand, card_ops.cal_hand_value, deck_list)
     
     # Checks for bust
-    if min(cal_hand_value(player1_hand)) > 21:
-        print('\nUnfortunate! You went Bust with a hand value of {}.'.format(min(cal_hand_value(player1_hand))))
-        print('\nDealer: "Hahaha, your money is safer with us!"')
+    if min(card_ops.cal_hand_value(player1_hand)) > 21:
+        print(f'Unfortunate! You went Bust with a hand value of {min(card_ops.cal_hand_value(player1_hand))}.')
+        print('Dealer: "Hahaha, your money is safer with us!"')
         player1.balance_change(-bet_amount)
-        print('Your balance is now:', player1.balance)
+        print(f'Your balance is now: {player1.balance}')
         break
     else:
         pass
     
-    pdecision = input('\nHIT or STAY? Type h for HIT or s for STAY: ').lower()
+    player_decision = input('HIT or STAY? Type h for HIT or s for STAY: ').lower()
     
 # Dealer's Turn
 
-if min(cal_hand_value(player1_hand)) > 21:
+if min(card_ops.cal_hand_value(player1_hand)) > 21:
     pass
 else:
-    display_hand(house,dealer_hand,cal_hand_value,deck_list)
+    card_ops.display_hand(house,dealer_hand,card_ops.cal_hand_value,deck_list)
 
     # Dealer will HIT on less than 17, otherwise STAND
-    while max(cal_hand_value(dealer_hand)) < 17:
+    while max(card_ops.cal_hand_value(dealer_hand)) < 17:
         print('\nHouse draws a card...')
-        dealer_hand, deck_list = take_1_card(dealer_hand,deck_list)
-        display_hand(house,dealer_hand,cal_hand_value,deck_list)
-    if max(cal_hand_value(dealer_hand)) > 21:
-        while min(cal_hand_value(dealer_hand)) < 17:
+        dealer_hand, deck_list = card_ops.take_1_card(dealer_hand,deck_list)
+        card_ops.display_hand(house,dealer_hand,card_ops.cal_hand_value,deck_list)
+    if max(card_ops.cal_hand_value(dealer_hand)) > 21:
+        while min(card_ops.cal_hand_value(dealer_hand)) < 17:
             print('\nHouse draws a card...')
-            dealer_hand, deck_list = take_1_card(dealer_hand,deck_list)
-            display_hand(house,dealer_hand,cal_hand_value,deck_list)
+            dealer_hand, deck_list = card_ops.take_1_card(dealer_hand,deck_list)
+            card_ops.display_hand(house,dealer_hand,card_ops.cal_hand_value,deck_list)
     # Compare dealer and player hands and determine outcome
     
     # First ensures anything above 21 hand value is bust
-    if min(cal_hand_value(dealer_hand)) > 21:
+    if min(card_ops.cal_hand_value(dealer_hand)) > 21:
         print('\nDealer busted! You win!')
         print('Your previous balance was: ', player1.balance)
-        player1.balance_change(2*bet_amount)
+        player1.balance_change(2 * bet_amount)
         print('Your balance is now:', player1.balance)
         print('\nDealer: "Nooooooo!"')
     
@@ -194,18 +121,18 @@ else:
         house_final_value = 0
         
         # Checks Player's Max Hand Value
-        if max(cal_hand_value(player1_hand)) > 21:
-            player1_final_value = min(cal_hand_value(player1_hand))
+        if max(card_ops.cal_hand_value(player1_hand)) > 21:
+            player1_final_value = min(card_ops.cal_hand_value(player1_hand))
         
         else: 
-            player1_final_value = max(cal_hand_value(player1_hand))
+            player1_final_value = max(card_ops.cal_hand_value(player1_hand))
         
         # Checks House's Max Hand Value
-        if max(cal_hand_value(dealer_hand)) > 21:
-            house_final_value = min(cal_hand_value(dealer_hand))
+        if max(card_ops.cal_hand_value(dealer_hand)) > 21:
+            house_final_value = min(card_ops.cal_hand_value(dealer_hand))
         
         else: 
-            house_final_value = max(cal_hand_value(dealer_hand))
+            house_final_value = max(card_ops.cal_hand_value(dealer_hand))
             
         # Compares player and dealer hand values
         if house_final_value > player1_final_value:
@@ -216,17 +143,17 @@ else:
             print('\nDealer: "You will always lose against me!"')
         
         elif house_final_value == player1_final_value:
-            print('\nDraw!')
+            print('Draw!')
             print('Your previous balance was: ', player1.balance)
             print('Your balance remains unchanged at: ', player1.balance)
-            print('\nDealer: "Let us play again!"')
+            print('Dealer: "Let us play again!"')
         
         else:
-            print('\nYou have the better hand. You win!')
+            print('You have the better hand. You win!')
             print('Your previous balance was: ', player1.balance)
             player1.balance_change(2 * bet_amount)
             print('Your balance is now: ', player1.balance)
-            print('\nDealer: "I\'ll get you for this"')
+            print('Dealer: "I\'ll get you for this"')
 
 # To fix
 # (Rectified, check) Player hand was 18,18 and dealer went first (4,14) then (14,24) then stopped drawing even though min still drawable
