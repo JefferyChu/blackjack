@@ -6,13 +6,10 @@ Conditions
 - Ace counts as 1 or 11
 - Face cards are 10
 
-Some exceptional cases:
-- 2 aces
-- 1 ace and other cards
-"""
+Some exceptional cases to consider:
+- More than 1 ace
 
-"""
-### Logical Flow
+Logical Flow
 - Player places bet
 - Give player hand
 - Give dealer hand
@@ -29,7 +26,6 @@ Some exceptional cases:
 
 # Imports
 import random
-from IPython.display import clear_output
 from class_def import Card, Player, CardOperations
     
 # Initialize player, house and CardOperations
