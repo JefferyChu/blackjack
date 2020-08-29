@@ -18,9 +18,6 @@ class Card:
 # Creation of the CardOperations class
 class CardOperations:
     """ Class for card operation methods and attributes. """
-
-    def __init__(self):
-        self.test = 'test'
     
     @staticmethod
     def deck_generator():
@@ -67,12 +64,15 @@ class CardOperations:
             player, deck_list = self.take_1_card(player, deck_list)
             print(f'{player.name} hand: {[pair[0] for pair in player.hand]}\nCurrent deck len: {len(deck_list)}')
             
-            # Take 1 card for dealer
+            # Take 1 card for dealer, showing only the first drawn card
             dealer, deck_list = self.take_1_card(dealer, deck_list)
-            print(f'{dealer.name} hand: {[pair[0] for pair in dealer.hand]}\nCurrent deck len: {len(deck_list)}')
-            
-            dist_counter += 1
+            if dist_counter == 0:
+                print(f'{dealer.name} hand: {[pair[0] for pair in dealer.hand]}\nCurrent deck len: {len(deck_list)}')
+            else:
+                print(f'Current deck len: {len(deck_list)}')
 
+            dist_counter += 1
+        
         print('\nEnd of initial distribution.')
 
         return player, dealer, deck_list

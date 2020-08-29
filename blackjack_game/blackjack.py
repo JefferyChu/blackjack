@@ -66,13 +66,11 @@ while True:
     
     if player_decision not in ['h', 's']:
         print('Please select valid decision!')
-    
     elif player_decision == 'h':
         player, deck_list = card_ops.take_1_card(player, deck_list)
         card_ops.display_hand(player, deck_list)
         if card_ops.check_bust(player) == 'bust':
             break
-
     elif player_decision == 's':
         break
 
