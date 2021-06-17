@@ -14,6 +14,7 @@ class Card:
     def __str__(self):
         return f"This card has values {self.value1} and {self.value2} and is of suit {self.suit}"
 
+# Change from feature/1 branch
 
 # Creation of the CardOperations class
 class CardOperations:
