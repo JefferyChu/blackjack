@@ -79,39 +79,54 @@ class CardOperations:
     
     @staticmethod
     def cal_hand_value(hand):
-        """ Calculate hand value. """
-
-        hand_value1 = 0
-        hand_value2 = 0
+        """ 
+        Calculate hand value with proper Ace handling.
+        Returns the best possible hand value (highest without busting, or lowest if all bust).
+        """
+        if not hand:
+            return 0
+            
+        # Count aces and calculate base value (all aces as 1)
+        aces = 0
+        total = 0
         
         for pair in hand:
-            hand_value1 += pair[1].value1
-            
-            # To account for 2 aces, take the lower value to prevent 22 value
-            if hand_value2 + pair[1].value2 > 21:
-                hand_value2 += pair[1].value1
+            card = pair[1]
+            if card.indexvalue == 1:  # It's an ace
+                aces += 1
+                total += 1  # Count ace as 1 initially
             else:
-                hand_value2 += pair[1].value2
+                total += card.value1  # Use the primary value
         
-        return hand_value1, hand_value2
+        # Try to use one ace as 11 if it doesn't bust
+        if aces > 0 and total + 10 <= 21:  # +10 because we change one ace from 1 to 11
+            total += 10
+            
+        return total
     
     def check_bust(self, player):
         """ Checks if player hand is a bust. """
 
-        if min(self.cal_hand_value(player.hand)) > 21:
-            print(f'\nUnfortunate! Busted with a hand value of {min(self.cal_hand_value(player.hand))}.')
+        hand_value = self.cal_hand_value(player.hand)
+        if hand_value > 21:
+            print(f'\nUnfortunate! Busted with a hand value of {hand_value}.')
             print('Dealer: "Hahaha, your money is safer with us!"')
             self.update_balance(player, 'lose')
             return 'bust'
         else:
             return 'safe'
     
-    def display_hand(self, player, deck_list):
+    def display_hand(self, player, deck_list, hide_dealer_card=False):
         """ Display hand. """
 
         print('\n{}\'s hand: '.format(player.name))
         
-        for pair in player.hand:
+        for i, pair in enumerate(player.hand):
+            # Hide dealer's second card if specified
+            if hide_dealer_card and i == 1 and player.name == 'Dealer':
+                print("?? - Hidden card")
+                continue
+                
             if pair[1].indexvalue == 1:
                 print(f"{pair[1].value1} - Ace of {pair[1].suit}")
             elif pair[1].indexvalue == 11:
@@ -123,7 +138,15 @@ class CardOperations:
             else:
                 print(f"{pair[1].value1} - {pair[1].suit}")
         
-        print(f'\n{player.name} hand values are {self.cal_hand_value(player.hand)}')
+        # Don't show dealer's full hand value if hiding cards
+        if not (hide_dealer_card and player.name == 'Dealer'):
+            hand_value = self.cal_hand_value(player.hand)
+            print(f'\n{player.name} hand value: {hand_value}')
+        else:
+            # Show only the visible card value for dealer
+            visible_value = player.hand[0][1].value1
+            print(f'\n{player.name} showing: {visible_value}')
+            
         print(f'\nCurrent deck len: {len(deck_list)}')
     
     def update_balance(self, player, status='lose'):
@@ -143,52 +166,48 @@ class CardOperations:
     def dealer_turn(self, player, dealer, deck_list):
         """ Dealer's turn after player has completed their turn. """
 
+        print(f"\n{dealer.name}'s full hand revealed:")
+        self.display_hand(dealer, deck_list)
+        
         # Dealer will HIT on less than 17, otherwise STAND
-        while max(self.cal_hand_value(dealer.hand)) < 17:
+        while self.cal_hand_value(dealer.hand) < 17:
+            print(f"\n{dealer.name} must hit (hand value: {self.cal_hand_value(dealer.hand)})")
             dealer, deck_list = self.take_1_card(dealer, deck_list)
             self.display_hand(dealer, deck_list)
-
-        if max(self.cal_hand_value(dealer.hand)) > 21:
-            while min(self.cal_hand_value(dealer.hand)) < 17:
-                dealer, deck_list = self.take_1_card(dealer, deck_list)
-                self.display_hand(dealer, deck_list)
+        
+        dealer_value = self.cal_hand_value(dealer.hand)
+        print(f"\n{dealer.name} stands with hand value: {dealer_value}")
         
         # Compare dealer and player hands and determine outcome
+        self.determine_winner(player, dealer)
         
-        # Check if dealer bust, otherwise check who wins
-        if min(self.cal_hand_value(dealer.hand)) > 21:
+    def determine_winner(self, player, dealer):
+        """ Compare hands and determine the winner. """
+        
+        player_value = self.cal_hand_value(player.hand)
+        dealer_value = self.cal_hand_value(dealer.hand)
+        
+        print(f"\nFinal comparison:")
+        print(f"{player.name}: {player_value}")
+        print(f"{dealer.name}: {dealer_value}")
+        
+        # Check if dealer bust
+        if dealer_value > 21:
             print(f'\n{dealer.name} busted! {player.name} wins!')
             print(f'{dealer.name}: "Nooooooo!"')
             self.update_balance(player, 'win')
+        elif dealer_value > player_value:
+            print(f'\n{dealer.name} has the better hand. {dealer.name} wins!')
+            print(f'{dealer.name}: "You will always lose against me!"')
+            self.update_balance(player, 'lose')
+        elif dealer_value == player_value:
+            print('\nDraw!')
+            print(f'{dealer.name}: "Let us play again!"')
+            self.update_balance(player, 'draw')
         else:
-            player_final_value = 0
-            dealer_final_value = 0
-            
-            # Checks Player's max hand value
-            if max(self.cal_hand_value(player.hand)) > 21:
-                player_final_value = min(self.cal_hand_value(player.hand))
-            else: 
-                player_final_value = max(self.cal_hand_value(player.hand))
-            
-            # Checks Dealer's max hand value
-            if max(self.cal_hand_value(dealer.hand)) > 21:
-                dealer_final_value = min(self.cal_hand_value(dealer.hand))
-            else: 
-                dealer_final_value = max(self.cal_hand_value(dealer.hand))
-                
-            # Compares player and dealer hand values and then updates balances
-            if dealer_final_value > player_final_value:
-                print(f'\n{dealer.name} has the better hand. {dealer.name} wins!')
-                print(f'{dealer.name}: "You will always lose against me!"')
-                self.update_balance(player, 'lose')
-            elif dealer_final_value == player_final_value:
-                print('\nDraw!')
-                print(f'{dealer.name}: "Let us play again!"')
-                self.update_balance(player, 'draw')
-            else:
-                print(f'\n{player.name} has the better hand. {player.name} wins!')
-                print(f'{dealer.name}: "I\'ll get you for this"')
-                self.update_balance(player, 'win')
+            print(f'\n{player.name} has the better hand. {player.name} wins!')
+            print(f'{dealer.name}: "I\'ll get you for this"')
+            self.update_balance(player, 'win')
 
 
 # Creation of Player class
@@ -199,6 +218,12 @@ class Player:
         self.name = name
         self.balance = balance
         self.hand = []
+        self.bet_amount = 0
 
     def balance_change(self, winnings):
         self.balance = self.balance + winnings
+        
+    def clear_hand(self):
+        """ Clear the player's hand for a new round. """
+        self.hand = []
+        self.bet_amount = 0
